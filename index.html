@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HSR Card Generator</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Orbitron:wght@700;900&display=swap');
+
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{min-height:100vh;background:#060810;font-family:'Segoe UI',system-ui,sans-serif;color:#f1f5f9;overflow-x:hidden}
+
+    /* scanline overlay on body */
+    body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,0.03) 0px,rgba(0,0,0,0.03) 1px,transparent 1px,transparent 2px);pointer-events:none;z-index:0}
+
+    /* NAV */
+    nav{position:sticky;top:0;z-index:100;background:rgba(6,8,16,0.95);backdrop-filter:blur(20px);border-bottom:1px solid rgba(123,97,255,0.15)}
+    .nav-inner{max-width:1300px;margin:0 auto;padding:13px 28px;display:flex;justify-content:space-between;align-items:center}
+    .logo{display:flex;align-items:center;gap:12px}
+    .logo-icon{background:linear-gradient(135deg,#7B61FF,#a855f7);padding:9px;border-radius:12px;display:flex;box-shadow:0 0 20px rgba(123,97,255,0.4)}
+    .logo-icon svg{width:18px;height:18px}
+    .logo-texts{display:flex;flex-direction:column}
+    .logo-text{font-family:'Orbitron',sans-serif;font-size:15px;font-weight:900;background:linear-gradient(135deg,#a78bfa,#e879f9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:0.05em}
+    .logo-sub{font-size:9px;color:#475569;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;margin-top:1px}
+    .nav-badge{font-size:10px;font-weight:800;color:#a78bfa;letter-spacing:0.15em;text-transform:uppercase;border:1px solid rgba(167,139,250,0.3);padding:4px 12px;border-radius:99px;background:rgba(123,97,255,0.08)}
+
+    /* MAIN */
+    .main{max-width:1300px;margin:0 auto;padding:32px 28px;display:flex;gap:28px;align-items:start;flex-wrap:wrap;position:relative;z-index:1}
+    .left{flex:0 0 360px;display:flex;flex-direction:column;gap:14px}
+    .right{flex:1;min-width:0;position:sticky;top:80px;display:flex;flex-direction:column;gap:16px}
+    @media(max-width:960px){.left{flex:0 0 100%}.right{position:static}}
+
+    /* PANELS */
+    .panel{background:rgba(255,255,255,0.03);padding:20px;border-radius:20px;border:1px solid rgba(255,255,255,0.06);backdrop-filter:blur(12px);position:relative;overflow:hidden}
+    .panel::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(to right,transparent,rgba(167,139,250,0.4),transparent)}
+    .pt{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:800;margin-bottom:16px;color:#e2e8f0;letter-spacing:0.02em}
+    .pib{padding:7px;border-radius:10px;display:flex}
+    .pib svg{width:15px;height:15px}
+    .pib-v{background:rgba(123,97,255,0.2)} .pib-v svg{stroke:#a78bfa}
+    .pib-g{background:rgba(16,185,129,0.18)} .pib-g svg{stroke:#34d399}
+    .pib-o{background:rgba(245,158,11,0.18)} .pib-o svg{stroke:#fbbf24}
+
+    /* FIELDS */
+    .hf{display:flex;flex-direction:column;gap:5px;margin-bottom:11px}
+    .hf label{font-size:9px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.18em}
+    .hf input,.hf select,.hf textarea{width:100%;padding:9px 13px;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.07);border-radius:10px;font-size:13px;color:#e2e8f0;outline:none;font-family:inherit;transition:border-color .2s,box-shadow .2s}
+    .hf input:focus,.hf select:focus,.hf textarea:focus{border-color:#7B61FF;box-shadow:0 0 0 3px rgba(123,97,255,0.12)}
+    .hf input.big{font-size:16px;font-weight:800;padding-left:44px;font-family:'Orbitron',sans-serif}
+    .hf textarea{resize:vertical}
+    .hf select option{background:#0f1117}
+    .wr{position:relative}
+    .wi{position:absolute;left:14px;top:50%;transform:translateY(-50%);opacity:.4;pointer-events:none}
+    .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+
+    /* SWATCHES */
+    .sw-lbl{font-size:9px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.18em;margin-bottom:10px}
+    .sw-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+    .sw{width:34px;height:34px;border-radius:10px;border:3px solid transparent;cursor:pointer;transition:transform .15s;outline:none}
+    .sw:hover{transform:scale(1.14)}
+    .sw.on{box-shadow:0 0 0 2px rgba(255,255,255,.18),0 0 0 4px var(--sc);border-color:rgba(255,255,255,.6)}
+
+    /* LAYOUT PICKS */
+    .lp-row{display:flex;gap:8px}
+    .lp{flex:1;padding:9px 4px;border-radius:10px;font-size:10px;font-weight:700;cursor:pointer;transition:all .2s;border:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.03);color:#475569;letter-spacing:0.03em}
+    .lp.on{color:#fff;border-color:transparent}
+
+    /* ELEMENT PICKER */
+    .el-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+    .el-btn{padding:5px 10px;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid transparent;transition:all .2s;display:flex;align-items:center;gap:5px;letter-spacing:0.05em}
+    .el-btn.on{box-shadow:0 0 12px var(--ec)}
+
+    /* UPLOAD */
+    .upload{height:68px;border-radius:12px;border:2px dashed rgba(255,255,255,.08);background:rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;cursor:pointer;gap:8px;transition:border-color .2s}
+    .upload:hover{border-color:#7B61FF}
+    .upload span{font-size:10px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:0.1em}
+
+    /* TIP */
+    .tip{padding:12px 14px;background:rgba(123,97,255,.04);border-radius:12px;border:1px solid rgba(123,97,255,.1)}
+    .tip-t{font-size:9px;font-weight:800;color:#a78bfa;margin-bottom:4px;letter-spacing:.1em}
+    .tip-b{font-size:9px;color:#475569;line-height:1.7}
+
+    /* PREVIEW HEADER */
+    .prev-hdr{display:flex;justify-content:space-between;align-items:center}
+    .prev-title{font-family:'Orbitron',sans-serif;font-size:15px;font-weight:900;color:#e2e8f0;letter-spacing:0.05em}
+    .prev-acts{display:flex;gap:8px}
+    .btn-o{display:flex;align-items:center;gap:6px;padding:8px 16px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;color:#94a3b8;transition:all .2s}
+    .btn-o:hover{background:rgba(255,255,255,0.08)}
+    .btn-p{display:flex;align-items:center;gap:6px;padding:8px 16px;background:linear-gradient(135deg,#7B61FF,#a855f7);border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;color:#fff;box-shadow:0 4px 20px rgba(123,97,255,.4);transition:all .2s}
+    .btn-p:hover{box-shadow:0 6px 28px rgba(123,97,255,.6)}
+
+    /* CANVAS WRAPPER */
+    /* CANVAS WRAPPER */
+
+    /* CANVAS WRAPPER — scales the fixed-size card to fit screen */
+    .canvas-wrap { width: 100%; overflow: hidden; border-radius: 28px; position: relative; isolation: isolate; }
+    /* Card always renders at exactly 760×427 then scales down */
+    .canvas {
+      width: 760px;
+      height: 427px;
+      border-radius: 28px;
+      border: 1px solid rgba(255,255,255,.06);
+      box-shadow: 0 40px 80px rgba(0,0,0,.8);
+      position: relative;
+      overflow: hidden;
+      /* Hard clip — prevents blur/glow bleeding outside during export */
+      clip-path: inset(0 round 28px);
+      -webkit-clip-path: inset(0 round 28px);
+      contain: strict;
+      transition: background .5s;
+      cursor: default;
+      transform-origin: top left;
+      /* scale set by JS */
+    }
+
+    /* GLOW CONTAINER — clips blur overflow */
+    .glow-wrap { position:absolute; inset:0; overflow:hidden; pointer-events:none; border-radius:28px; z-index:0; }
+    /* HINT */
+    .hint{padding:13px 16px;background:rgba(123,97,255,0.05);border-radius:12px;border:1px solid rgba(123,97,255,.1);font-size:10px;color:#475569;line-height:1.7}
+
+    /* SEARCH SELECT */
+    .ss-wrap{position:relative;margin-bottom:12px}
+    .ss-field{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.08);border-radius:11px;padding:7px 11px;transition:border-color .2s;cursor:text}
+    .ss-field:focus-within{border-color:#7B61FF;box-shadow:0 0 0 3px rgba(123,97,255,0.12)}
+    .ss-thumb{width:32px;height:32px;border-radius:7px;object-fit:cover;background:rgba(255,255,255,0.06);flex-shrink:0;border:1px solid rgba(255,255,255,0.08)}
+    .ss-thumb-ph{width:32px;height:32px;border-radius:7px;background:rgba(255,255,255,0.05);border:1px dashed rgba(255,255,255,0.1);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px}
+    .ss-input{flex:1;background:transparent;border:none;outline:none;font-size:12px;color:#e2e8f0;font-family:inherit;min-width:0}
+    .ss-input::placeholder{color:#334155}
+    .ss-spin{width:14px;height:14px;border:2px solid rgba(123,97,255,0.3);border-top-color:#7B61FF;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;display:none}
+    .ss-spin.show{display:block}
+    .ss-clear{font-size:16px;color:#334155;cursor:pointer;flex-shrink:0;line-height:1;display:none;padding:0 2px}
+    .ss-clear.show{display:block}
+    .ss-clear:hover{color:#94a3b8}
+    .ss-dd{position:absolute;top:calc(100% + 6px);left:0;right:0;background:rgba(10,11,20,0.98);border:1px solid rgba(123,97,255,0.2);border-radius:14px;z-index:200;backdrop-filter:blur(20px);box-shadow:0 16px 48px rgba(0,0,0,0.7);overflow:hidden;display:none;max-height:220px;overflow-y:auto}
+    .ss-dd.open{display:block;animation:dropIn .15s ease}
+    .ss-dd-item{display:flex;align-items:center;gap:10px;padding:9px 12px;cursor:pointer;transition:background .12s}
+    .ss-dd-item:hover{background:rgba(123,97,255,0.12)}
+    .ss-dd-item:active{background:rgba(123,97,255,0.2)}
+    .ss-dd-img{width:34px;height:34px;border-radius:7px;object-fit:cover;background:rgba(255,255,255,0.05);flex-shrink:0;border:1px solid rgba(255,255,255,0.06)}
+    .ss-dd-img-ph{width:34px;height:34px;border-radius:7px;background:rgba(255,255,255,0.04);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px}
+    .ss-dd-name{font-size:12px;font-weight:600;color:#e2e8f0;line-height:1.4}
+    .ss-dd-type{font-size:9px;color:#475569;font-weight:700;text-transform:uppercase;letter-spacing:.1em}
+    .ss-dd-empty{padding:16px;text-align:center;font-size:11px;color:#334155}
+    .ss-dd::-webkit-scrollbar{width:4px}
+    .ss-dd::-webkit-scrollbar-track{background:transparent}
+    .ss-dd::-webkit-scrollbar-thumb{background:rgba(123,97,255,0.3);border-radius:99px}
+
+    @keyframes spin{to{transform:rotate(360deg)}}
+    /* EXPORT DROPDOWN */
+    .exp-wrap{position:relative}
+    .exp-menu{position:absolute;top:calc(100% + 10px);right:0;width:260px;background:rgba(12,13,22,0.98);border:1px solid rgba(167,139,250,0.2);border-radius:16px;padding:8px;z-index:999;backdrop-filter:blur(20px);box-shadow:0 20px 60px rgba(0,0,0,0.7),0 0 0 1px rgba(255,255,255,0.04);display:none;transform-origin:top right;animation:dropIn .2s ease}
+    .exp-menu.open{display:block}
+    @keyframes dropIn{from{opacity:0;transform:scale(0.95) translateY(-6px)}to{opacity:1;transform:scale(1) translateY(0)}}
+    .exp-header{font-size:9px;font-weight:800;color:#334155;text-transform:uppercase;letter-spacing:.18em;padding:6px 10px 10px}
+    .exp-divider{height:1px;background:rgba(255,255,255,0.06);margin:6px 0}
+    .exp-item{width:100%;display:flex;align-items:center;gap:12px;padding:10px 10px;border-radius:10px;border:none;background:transparent;cursor:pointer;transition:background .15s;text-align:left}
+    .exp-item:hover{background:rgba(255,255,255,0.06)}
+    .exp-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .exp-info{flex:1}
+    .exp-name{font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:2px}
+    .exp-desc{font-size:10px;color:#475569;font-weight:500}
+    .exp-badge{font-size:9px;font-weight:800;color:#a78bfa;background:rgba(123,97,255,0.15);border:1px solid rgba(123,97,255,0.3);padding:3px 8px;border-radius:99px;white-space:nowrap}
+    /* loading spinner on btn */
+    .btn-p.loading{opacity:0.7;pointer-events:none}
+
+    /* FOOTER */
+    footer{border-top:1px solid rgba(255,255,255,.04);padding:28px 24px;text-align:center;margin-top:40px;background:rgba(0,0,0,.3);position:relative;z-index:1}
+    .ft{font-size:12px;color:#334155}
+    .fi{display:flex;justify-content:center;gap:16px;margin-top:12px}
+    .fic{color:#334155;cursor:pointer;transition:color .2s}
+    .fic:hover{color:#7B61FF}
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      </div>
+      <div class="logo-texts">
+        <span class="logo-text">HSR CARD GEN</span>
+        <span class="logo-sub">Honkai Star Rail · Build System</span>
+      </div>
+    </div>
+    <div class="nav-badge">⚡ CINEMATIC MODE</div>
+  </div>
+</nav>
+
+<div class="main">
+
+  <!-- ═══ LEFT FORM ═══ -->
+  <div class="left">
+
+    <!-- Panel 1: Karakter -->
+    <div class="panel">
+      <div class="pt">
+        <div class="pib pib-v"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></div>
+        Character Identity
+      </div>
+
+      <div class="hf">
+        <label>Character Name</label>
+        <div class="wr">
+          <span class="wi"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#7B61FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg></span>
+          <input class="big" id="f-name" value="LYNX" oninput="handleName(this.value)" placeholder="Character name..."/>
+        </div>
+      </div>
+
+      <div class="g2">
+        <div class="hf"><label>Role / Path</label><input id="f-role" value="ABUNDANCE" oninput="render()"/></div>
+        <div class="hf"><label>Version</label><input id="f-ver" value="2.1" oninput="render()"/></div>
+      </div>
+
+      <div class="hf">
+        <label>Description</label>
+        <textarea id="f-desc" rows="3" oninput="render()">Lynx adalah penyembuh yang sangat efisien dengan kemampuan menghilangkan debuff dari seluruh rekan tim.</textarea>
+      </div>
+
+      <div class="hf">
+        <label>Skill Priority (comma separated)</label>
+        <input id="f-skills" value="Skill,Ult,Talent,Basic" oninput="render()"/>
+      </div>
+
+      <div class="hf">
+        <label>Stars</label>
+        <select id="f-stars" onchange="render()">
+          <option value="5">★★★★★  5 Stars</option>
+          <option value="4">★★★★☆  4 Stars</option>
+        </select>
+      </div>
+
+      <div class="hf">
+        <label>Upload Photo</label>
+        <label for="f-file" class="upload" style="cursor:pointer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+          <span id="upload-txt">Upload Image</span>
+        </label>
+        <input type="file" id="f-file" accept="image/*" style="display:none;position:absolute" onchange="uploadImg(this)"/>
+      </div>
+
+      <div class="tip">
+        <div class="tip-t">💡 AUTO-FILL DATABASE</div>
+        <div class="tip-b">Type: <strong style="color:#a78bfa">LYNX · KAFKA · BLADE · SEELE</strong> — data auto-fills including element & relic.</div>
+      </div>
+    </div>
+
+    <!-- Panel 2: Element & Stats -->
+    <div class="panel">
+      <div class="pt">
+        <div class="pib pib-o"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+        Element & Stats
+      </div>
+
+      <div class="sw-lbl">⚡ Element</div>
+      <div class="el-row" id="el-row"></div>
+
+      <div class="g2">
+        <div class="hf"><label>Max HP (%)</label><input id="f-hp" value="28" oninput="render()"/></div>
+        <div class="hf"><label>Effect Res (%)</label><input id="f-effRes" value="12" oninput="render()"/></div>
+        <div class="hf"><label>Defense (%)</label><input id="f-def" value="20" oninput="render()"/></div>
+        <div class="hf"><label>SPD</label><input id="f-spd" value="134" oninput="render()"/></div>
+        <div class="hf"><label>Break Effect (%)</label><input id="f-brk" value="66" oninput="render()"/></div>
+        <div class="hf"><label>Energy Regen (%)</label><input id="f-erg" value="100" oninput="render()"/></div>
+      </div>
+    </div>
+
+    <!-- Panel 3: Relic & Light Cone -->
+    <div class="panel">
+      <div class="pt">
+        <div class="pib pib-g"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+        Relic & Light Cone
+      </div>
+
+      <!-- Relic Set 1 -->
+      <div class="hf" style="margin-bottom:0">
+        <label>Relic Set Utama</label>
+      </div>
+      <div class="ss-wrap" id="ss-relic1">
+        <div class="ss-field">
+          <div class="ss-thumb-ph" id="relic1-ph">💎</div>
+          <img class="ss-thumb" id="relic1-img" style="display:none" src="" alt=""/>
+          <input class="ss-input" id="relic1-input" placeholder="Search relic set name..." autocomplete="off"
+            oninput="ssSearch('relic1',this.value)"
+            onfocus="ssOpen('relic1')"
+            value="Longevous Disciple"/>
+          <div class="ss-spin" id="relic1-spin"></div>
+          <span class="ss-clear show" id="relic1-clear" onclick="ssClear('relic1')">×</span>
+        </div>
+        <div class="ss-dd" id="relic1-dd"></div>
+      </div>
+
+      <!-- Planar Ornament -->
+      <div class="hf" style="margin-bottom:0">
+        <label>Planar Ornament</label>
+      </div>
+      <div class="ss-wrap" id="ss-relic2">
+        <div class="ss-field">
+          <div class="ss-thumb-ph" id="relic2-ph">🌐</div>
+          <img class="ss-thumb" id="relic2-img" style="display:none" src="" alt=""/>
+          <input class="ss-input" id="relic2-input" placeholder="Search planar ornament name..." autocomplete="off"
+            oninput="ssSearch('relic2',this.value)"
+            onfocus="ssOpen('relic2')"
+            value="Fleet of the Ageless"/>
+          <div class="ss-spin" id="relic2-spin"></div>
+          <span class="ss-clear show" id="relic2-clear" onclick="ssClear('relic2')">×</span>
+        </div>
+        <div class="ss-dd" id="relic2-dd"></div>
+      </div>
+
+      <!-- Light Cone -->
+      <div class="hf" style="margin-bottom:0">
+        <label>Light Cone</label>
+      </div>
+      <div class="ss-wrap" id="ss-lc">
+        <div class="ss-field">
+          <div class="ss-thumb-ph" id="lc-ph">🔦</div>
+          <img class="ss-thumb" id="lc-img" style="display:none" src="" alt=""/>
+          <input class="ss-input" id="lc-input" placeholder="Search light cone name..." autocomplete="off"
+            oninput="ssSearch('lc',this.value)"
+            onfocus="ssOpen('lc')"
+            value="Warmth Shortens Cold Nights"/>
+          <div class="ss-spin" id="lc-spin"></div>
+          <span class="ss-clear show" id="lc-clear" onclick="ssClear('lc')">×</span>
+        </div>
+        <div class="ss-dd" id="lc-dd"></div>
+      </div>
+
+      <div class="hf"><label>Light Cone Superimpose</label>
+        <select id="f-lc-stars" onchange="render()">
+          <option value="5">★★★★★  S5</option>
+          <option value="4">★★★★☆  S4</option>
+          <option value="3">★★★☆☆  S3</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Panel 4: Desain -->
+    <div class="panel">
+      <div class="pt">
+        <div class="pib pib-v"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="#a78bfa" stroke="#a78bfa"/><circle cx="17.5" cy="10.5" r=".5" fill="#a78bfa" stroke="#a78bfa"/><circle cx="8.5" cy="7.5" r=".5" fill="#a78bfa" stroke="#a78bfa"/><circle cx="6.5" cy="12.5" r=".5" fill="#a78bfa" stroke="#a78bfa"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" stroke="#a78bfa"/></svg></div>
+        Theme & Layout
+      </div>
+
+      <div class="sw-lbl">🎨 Color Theme</div>
+      <div class="sw-row" id="sw-row"></div>
+
+      <div class="g2" style="margin-bottom:14px">
+        <div class="hf" style="margin-bottom:0"><label>Typography</label>
+          <select id="f-font" onchange="render()">
+            <option value="orbitron">Orbitron (Sci-Fi)</option>
+            <option value="rajdhani">Rajdhani (Military)</option>
+            <option value="sans">System Sans</option>
+          </select>
+        </div>
+        <div class="hf" style="margin-bottom:0"><label>Background Effect</label>
+          <select id="f-bg" onchange="render()">
+            <option value="grid">Grid Lines</option>
+            <option value="hex">Hexagon</option>
+            <option value="noise">Noise/Grain</option>
+            <option value="clean">Clean</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="sw-lbl" style="margin-bottom:10px">🖼️ Card Layout</div>
+      <div class="lp-row" id="lp-row"></div>
+    </div>
+
+  </div>
+
+  <!-- ═══ RIGHT PREVIEW ═══ -->
+  <div class="right">
+    <div class="prev-hdr">
+      <div class="prev-title">PREVIEW</div>
+      <div class="prev-acts">
+        <div class="exp-wrap" id="exp-wrap">
+          <button class="btn-p" id="exp-btn" onclick="toggleDropdown()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+            Export
+            <svg id="exp-chevron" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="exp-menu" id="exp-menu">
+            <div class="exp-header">Pilih Format Export</div>
+            <button class="exp-item" onclick="exportAs('png')">
+              <div class="exp-icon" style="background:rgba(56,189,248,0.15);color:#38bdf8">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+              </div>
+              <div class="exp-info"><div class="exp-name">PNG</div><div class="exp-desc">Transparent · High quality</div></div>
+              <div class="exp-badge">Recommended</div>
+            </button>
+            <button class="exp-item" onclick="exportAs('jpg')">
+              <div class="exp-icon" style="background:rgba(251,191,36,0.15);color:#fbbf24">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+              </div>
+              <div class="exp-info"><div class="exp-name">JPG</div><div class="exp-desc">Small size · Dark background</div></div>
+            </button>
+            <div class="exp-divider"></div>
+            <button class="exp-item" onclick="exportAs('pdf')">
+              <div class="exp-icon" style="background:rgba(248,113,113,0.15);color:#f87171">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+              </div>
+              <div class="exp-info"><div class="exp-name">PDF</div><div class="exp-desc">Via Ctrl+P → Save as PDF</div></div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="toast" style="position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:rgba(20,20,30,0.95);border:1px solid rgba(167,139,250,0.3);color:#e2e8f0;padding:10px 20px;border-radius:12px;font-size:13px;font-weight:600;z-index:9999;transition:transform .35s cubic-bezier(.34,1.56,.64,1),opacity .35s;opacity:0;pointer-events:none;backdrop-filter:blur(12px);box-shadow:0 8px 32px rgba(0,0,0,0.5);display:flex;align-items:center;gap:8px">
+      <span id="toast-icon">✅</span><span id="toast-msg">Berhasil!</span>
+    </div>
+
+    <div class="canvas-wrap" id="canvas-wrap">
+      <div class="canvas" id="h-canvas"></div>
+    </div>
+
+    <div class="hint">
+      ✦ <strong style="color:#a78bfa">Dark Cinematic Mode active</strong> — Card rendered with dramatic lighting, scanline overlay, and layered glow. Every field update is reflected in real-time.
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p class="ft">HSR Card Generator · FormToDesign Studio · 2024</p>
+  <div class="fi">
+    <span class="fic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg></span>
+    <span class="fic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg></span>
+  </div>
+</footer>
+
+<script>
+/* ═══════════════════════════════════════════════
+   ITEM DATABASE — Relic, Planar, Light Cone
+═══════════════════════════════════════════════ */
+const ITEM_DB = {
+  relic1: [
+    'Passerby of Wandering Cloud','Musketeer of Wild Wheat','Knight of Purity Palace',
+    'Hunter of Glacial Forest','Champion of Streetwise Boxing','Guard of Wuthering Snow',
+    'Firesmith of Lava-Forging','Genius of Brilliant Stars','Band of Sizzling Thunder',
+    'Eagle of Twilight Line','Thief of Shooting Meteor','Wastelander of Banditry Desert',
+    'Longevous Disciple','Messenger Traversing Hackerspace','Prisoner in Deep Confinement',
+    'The Ashblazing Grand Duke','Watchmaker, Master of Dream Machinations',
+    'Iron Cavalry Against the Scourge','The Wind-Soaring Valorous',
+    "Sacerdos' Relived Ordeal","Scholar Lost in Erudition","Hero of Triumphant Song",
+  ],
+  relic2: [
+    'Space Sealing Station','Fleet of the Ageless','Pan-Cosmic Commercial Enterprise',
+    'Belobog of the Architects','Celestial Differentiator','Inert Salsotto',
+    'Talia: Kingdom of Banditry','Sprightly Vonwacq','Rutilant Arena','Broken Keel',
+    'Firmament Frontline: Glamoth','Penacony, Land of the Dreams',
+    'Sigonia, the Unclaimed Desolation','Izumo Gensei and Takama Divine Realm',
+    'Duran, Dynasty of Running Wolves','Forge of the Kalpagni Lantern',
+    'Lushaka, the Sunken Seas','The Wondrous BananAmusement Park',
+  ],
+  lc: [
+    'In the Night','Sleep Like the Dead','Time Waits for No One',
+    'But the Battle Isn\'t Over','Patience Is All You Need','Echoes of the Coffin',
+    'She Already Shut Her Eyes','Brighter Than the Sun','I Shall Be My Own Sword',
+    'An Instant Before A Gaze','Solitary Healing','Reforged Remembrance',
+    'Whereabouts Should Dreams Rest','Inherently Unjust Destiny',
+    'Warmth Shortens Cold Nights','Night on the Milky Way','Before Dawn',
+    'Something Irreplaceable','A Secret Vow','Cruising in the Stellar Sea',
+    'Texture of Memories','Worrisome, Blissful','Along the Passing Shore',
+    'Moment of Victory','Carve the Moon, Weave the Clouds','Past Self in Mirror',
+    'Good Night and Sleep Well','Fermata','Eyes of the Prey','Void',
+    'On the Fall of an Aeon','Geniuses\' Repose','The Unreachable Side',
+    'Poised to Bloom','Scent Alone Stays True','Night of Fright',
+  ],
+};
+
+// Image URL cache: { 'ItemName': 'https://...' }
+const imgCache = {};
+
+// Current selected image URLs
+const selImgs = { relic1: null, relic2: null, lc: null };
+
+/* ═══════════════════════════════════════════════
+   FANDOM WIKI IMAGE FETCHER
+═══════════════════════════════════════════════ */
+// Build candidate filenames for wiki lookup
+function wikiFileCandidates(name, type) {
+  const safe = name.replace(/['']/g,"'").trim();
+  const esc  = encodeURIComponent;
+  if (type === 'lc') {
+    return [
+      `Light_Cone_${safe.replace(/ /g,'_')}_(Light_Cone).png`,
+      `Light_Cone_${safe.replace(/ /g,'_')}.png`,
+      `Item_${safe.replace(/ /g,'_')}.png`,
+    ];
+  }
+  // Relic set — use head piece icon
+  return [
+    `Item_${safe.replace(/ /g,'_')}_Head.png`,
+    `Item_${safe.replace(/ /g,'_')}_Sphere.png`,
+    `Item_${safe.replace(/ /g,'_')}.png`,
+    `Relic_${safe.replace(/ /g,'_')}.png`,
+  ];
+}
+
+async function fetchWikiImage(name, type) {
+  const cacheKey = `${type}::${name}`;
+  if (imgCache[cacheKey]) return imgCache[cacheKey];
+
+  const candidates = wikiFileCandidates(name, type);
+  for (const file of candidates) {
+    try {
+      const url = `https://houkai-star-rail.fandom.com/api.php?action=query&titles=File:${encodeURIComponent(file)}&prop=imageinfo&iiprop=url&format=json&origin=*`;
+      const res  = await fetch(url);
+      const data = await res.json();
+      const pages = data?.query?.pages;
+      if (!pages) continue;
+      const page  = Object.values(pages)[0];
+      if (page.missing !== undefined) continue;   // file doesn't exist
+      const imgUrl = page?.imageinfo?.[0]?.url;
+      if (imgUrl) {
+        imgCache[cacheKey] = imgUrl;
+        return imgUrl;
+      }
+    } catch(_) { /* try next */ }
+  }
+  return null;
+}
+
+/* ═══════════════════════════════════════════════
+   SEARCH SELECT COMPONENT
+═══════════════════════════════════════════════ */
+function ssSearch(id, query) {
+  const list   = ITEM_DB[id] || [];
+  const q      = query.toLowerCase().trim();
+  const dd     = document.getElementById(`${id}-dd`);
+  const clear  = document.getElementById(`${id}-clear`);
+  clear.classList.toggle('show', query.length > 0);
+
+  if (!q) { dd.classList.remove('open'); return; }
+
+  const matches = list.filter(n => n.toLowerCase().includes(q)).slice(0, 8);
+  if (!matches.length) {
+    dd.innerHTML = `<div class="ss-dd-empty">Not found — try another keyword</div>`;
+    dd.classList.add('open');
+    return;
+  }
+
+  const type = id === 'lc' ? 'lc' : (id === 'relic1' ? 'relic' : 'planar');
+  const typeLabel = id === 'lc' ? 'Light Cone' : (id === 'relic1' ? 'Relic Set' : 'Planar Ornament');
+
+  dd.innerHTML = matches.map(name => {
+    const cached = imgCache[`${id}::${name}`];
+    const imgHtml = cached
+      ? `<img class="ss-dd-img" src="${cached}" alt="" onerror="this.style.display='none'">`
+      : `<div class="ss-dd-img-ph">${id==='lc'?'🔦':id==='relic1'?'💎':'🌐'}</div>`;
+    return `<div class="ss-dd-item" onclick="ssSelect('${id}','${name.replace(/'/g,"\\'")}')">
+      ${imgHtml}
+      <div><div class="ss-dd-name">${name}</div><div class="ss-dd-type">${typeLabel}</div></div>
+    </div>`;
+  }).join('');
+  dd.classList.add('open');
+}
+
+async function ssSelect(id, name) {
+  const input = document.getElementById(`${id}-input`);
+  const dd    = document.getElementById(`${id}-dd`);
+  const spin  = document.getElementById(`${id}-spin`);
+  const ph    = document.getElementById(`${id}-ph`);
+  const imgEl = document.getElementById(`${id}-img`);
+  const clear = document.getElementById(`${id}-clear`);
+
+  input.value = name;
+  dd.classList.remove('open');
+  clear.classList.add('show');
+
+  // Show spinner while fetching image
+  spin.classList.add('show');
+  ph.style.display = 'none';
+  imgEl.style.display = 'none';
+
+  const type   = id === 'lc' ? 'lc' : 'relic';
+  const imgUrl = await fetchWikiImage(name, type);
+
+  spin.classList.remove('show');
+
+  if (imgUrl) {
+    imgEl.src = imgUrl;
+    imgEl.style.display = 'block';
+    ph.style.display = 'none';
+    selImgs[id] = imgUrl;
+  } else {
+    ph.style.display = 'flex';
+    imgEl.style.display = 'none';
+    selImgs[id] = null;
+  }
+  render();
+}
+
+function ssOpen(id) {
+  const val = document.getElementById(`${id}-input`).value;
+  if (val.trim()) ssSearch(id, val);
+}
+
+function ssClear(id) {
+  document.getElementById(`${id}-input`).value = '';
+  document.getElementById(`${id}-dd`).classList.remove('open');
+  document.getElementById(`${id}-clear`).classList.remove('show');
+  const ph    = document.getElementById(`${id}-ph`);
+  const imgEl = document.getElementById(`${id}-img`);
+  ph.style.display = 'flex';
+  imgEl.style.display = 'none';
+  selImgs[id] = null;
+  render();
+}
+
+// Close dropdowns when clicking outside
+document.addEventListener('click', e => {
+  ['relic1','relic2','lc'].forEach(id => {
+    const wrap = document.getElementById(`ss-${id}`);
+    if (wrap && !wrap.contains(e.target)) {
+      document.getElementById(`${id}-dd`).classList.remove('open');
+    }
+  });
+});
+const DB = {
+  LYNX: {
+    role:'ABUNDANCE', hp:'28', effRes:'12', def:'20', spd:'134', brk:'66', erg:'100',
+    desc:'Lynx is a highly efficient healer capable of cleansing debuffs from the entire team while keeping allies topped up with HP recovery.',
+    skills:'Skill,Ult,Talent,Basic', element:'quantum',
+    relic1:'Longevous Disciple', relic2:'Fleet of the Ageless', lc:'Warmth Shortens Cold Nights', theme:0, stars:5,
+    rec:[
+      { label:'HP (TOTAL)',   val:'≥4000',  col:'#f472b6' },
+      { label:'SPD (MIN)',    val:'134+',   col:'#fbbf24' },
+      { label:'EFFECT RES',  val:'≥30%',   col:'#818cf8' },
+      { label:'DEF',         val:'≥1200',  col:'#94a3b8' },
+      { label:'ENERGY REGEN',val:'100%',   col:'#34d399' },
+      { label:'BREAK EFF',   val:'≥50%',   col:'#fb923c' },
+    ]
+  },
+  KAFKA: {
+    role:'NIHILITY', hp:'18', effRes:'8', def:'15', spd:'145', brk:'40', erg:'110',
+    desc:'Kafka is the core of any DoT team, capable of instantly triggering Shock damage without waiting for enemy turns — a relentless nihility predator.',
+    skills:'Ult,Skill,Talent,Basic', element:'lightning',
+    relic1:'Prisoner in Deep Confinement', relic2:'Space Sealing Station', lc:'Patience Is All You Need', theme:4, stars:5,
+    rec:[
+      { label:'ATK (TOTAL)',  val:'≥2400',  col:'#c084fc' },
+      { label:'SPD (MIN)',    val:'145+',   col:'#fbbf24' },
+      { label:'EFFECT HIT',  val:'≥80%',   col:'#f472b6' },
+      { label:'CRIT RATE',   val:'≥50%',   col:'#ef4444' },
+      { label:'CRIT DMG',    val:'≥100%',  col:'#fb923c' },
+      { label:'BREAK EFF',   val:'≥100%',  col:'#34d399' },
+    ]
+  },
+  BLADE: {
+    role:'DESTRUCTION', hp:'45', effRes:'5', def:'25', spd:'139', brk:'20', erg:'120',
+    desc:'Blade consumes his own HP to deal massive AoE damage to enemies, scaling off his max HP for devastating destruction-path offense.',
+    skills:'Skill,Basic,Ult,Talent', element:'wind',
+    relic1:'Longevous Disciple', relic2:'Rutilant Arena', lc:'Brighter Than the Sun', theme:3, stars:5,
+    rec:[
+      { label:'HP (TOTAL)',   val:'≥10000', col:'#f472b6' },
+      { label:'SPD (MIN)',    val:'134+',   col:'#fbbf24' },
+      { label:'CRIT RATE',   val:'≥60%',   col:'#ef4444' },
+      { label:'CRIT DMG',    val:'≥120%',  col:'#fb923c' },
+      { label:'HP %',        val:'≥50%',   col:'#4ade80' },
+      { label:'ENERGY REGEN',val:'120 NRG', col:'#34d399' },
+    ]
+  },
+  SEELE: {
+    role:'THE HUNT', hp:'15', effRes:'10', def:'12', spd:'155', brk:'32', erg:'110',
+    desc:'Seele boasts extraordinary speed and can take extra turns after defeating an enemy, making her a relentless single-target powerhouse.',
+    skills:'Skill,Ult,Talent,Basic', element:'quantum',
+    relic1:'Genius of Brilliant Stars', relic2:'Rutilant Arena', lc:'In the Night', theme:1, stars:5,
+    rec:[
+      { label:'SPD (IDEAL)',  val:'160+',   col:'#fbbf24' },
+      { label:'CRIT RATE',   val:'≥75%',   col:'#ef4444' },
+      { label:'CRIT DMG',    val:'≥150%',  col:'#fb923c' },
+      { label:'ATK (TOTAL)', val:'≥2600',  col:'#c084fc' },
+      { label:'IREN',        val:'≥20%',   col:'#818cf8' },
+      { label:'ENERGY COST', val:'110 NRG', col:'#34d399' },
+    ]
+  },
+  CYRENE: {
+    role:'REMEMBRANCE', hp:'35', effRes:'8', def:'18', spd:'180', brk:'30', erg:'24',
+    desc:'Cyrene is a 5★ Ice support who buffs Chrysos Heirs and the whole team via True DMG zones, Recollection stacks, and a game-changing Ultimate that instantly charges all allies\' Ultimates.',
+    skills:'Memosprite,Skill,Talent,Ult,Basic', element:'ice',
+    relic1:'World-Remaking Deliverer', relic2:"Amphoreus, The Eternal Land", lc:'This Love, Forever', theme:2, stars:5,
+    rec:[
+      { label:'SPD (MIN)',    val:'≥180',   col:'#fbbf24' },
+      { label:'SPD (IDEAL)', val:'200+',   col:'#f59e0b' },
+      { label:'CRIT RATE',   val:'≥50%',   col:'#ef4444' },
+      { label:'CRIT DMG',    val:'≥120%',  col:'#fb923c' },
+      { label:'HP (TOTAL)',  val:'≥5000',  col:'#7dd3fc' },
+      { label:'RECOLLECT',   val:'24 pts', col:'#34d399' },
+    ]
+  },
+};
+
+const THEMES = [
+  { n:'Cosmic',   p:'#7B61FF', s:'#1a1040', g:'linear-gradient(135deg,#0a0716 0%,#1a1040 50%,#0d0a20 100%)' },
+  { n:'Midnight', p:'#6366f1', s:'#0f0f23', g:'linear-gradient(135deg,#06060f 0%,#0f0f23 50%,#080818 100%)' },
+  { n:'Ocean',    p:'#38bdf8', s:'#0c1836', g:'linear-gradient(135deg,#060c18 0%,#0c1836 50%,#081020 100%)' },
+  { n:'Emerald',  p:'#34d399', s:'#031a14', g:'linear-gradient(135deg,#020d0a 0%,#031a14 50%,#041510 100%)' },
+  { n:'Rose',     p:'#f472b6', s:'#1a0010', g:'linear-gradient(135deg,#0d0008 0%,#1a0010 50%,#100008 100%)' },
+  { n:'Gold',     p:'#fbbf24', s:'#1a1200', g:'linear-gradient(135deg,#0d0900 0%,#1a1200 50%,#120e00 100%)' },
+];
+
+const ELEMENTS = [
+  { k:'fire',       l:'Fire',      c:'#ef4444', ec:'rgba(239,68,68,0.4)',    ico:'🔥', img:'https://static.wikia.nocookie.net/houkai-star-rail/images/5/56/Element_Fire.png' },
+  { k:'ice',        l:'Ice',       c:'#7dd3fc', ec:'rgba(125,211,252,0.4)',  ico:'❄️', img:'https://static.wikia.nocookie.net/houkai-star-rail/images/8/8b/Element_Ice.png' },
+  { k:'lightning',  l:'Lightning', c:'#c084fc', ec:'rgba(192,132,252,0.4)',  ico:'⚡', img:'https://static.wikia.nocookie.net/houkai-star-rail/images/3/3a/Element_Lightning.png' },
+  { k:'wind',       l:'Wind',      c:'#4ade80', ec:'rgba(74,222,128,0.4)',   ico:'🌀', img:'https://static.wikia.nocookie.net/houkai-star-rail/images/4/40/Element_Wind.png' },
+  { k:'quantum',    l:'Quantum',   c:'#818cf8', ec:'rgba(129,140,248,0.4)',  ico:'🔮', img:'https://static.wikia.nocookie.net/houkai-star-rail/images/d/d9/Element_Quantum.png' },
+  { k:'imaginary',  l:'Imaginary', c:'#fcd34d', ec:'rgba(252,211,77,0.4)',   ico:'✨', img:'https://static.wikia.nocookie.net/houkai-star-rail/images/2/28/Element_Imaginary.png' },
+  { k:'physical',   l:'Physical',  c:'#94a3b8', ec:'rgba(148,163,184,0.4)',  ico:'⚔️', img:'https://static.wikia.nocookie.net/houkai-star-rail/images/3/31/Element_Physical.png' },
+];
+
+const PATH_IMGS = {
+  'THE HUNT':     'https://static.wikia.nocookie.net/houkai-star-rail/images/c/c7/Path_The_Hunt.png',
+  'HUNT':         'https://static.wikia.nocookie.net/houkai-star-rail/images/c/c7/Path_The_Hunt.png',
+  'NIHILITY':     'https://static.wikia.nocookie.net/houkai-star-rail/images/a/a2/Path_Nihility.png',
+  'DESTRUCTION':  'https://static.wikia.nocookie.net/houkai-star-rail/images/5/5e/Path_Destruction.png',
+  'ABUNDANCE':    'https://static.wikia.nocookie.net/houkai-star-rail/images/8/87/Path_Abundance.png',
+  'PRESERVATION': 'https://static.wikia.nocookie.net/houkai-star-rail/images/f/fd/Path_Preservation.png',
+  'ERUDITION':    'https://static.wikia.nocookie.net/houkai-star-rail/images/b/b8/Path_Erudition.png',
+  'HARMONY':      'https://static.wikia.nocookie.net/houkai-star-rail/images/d/d6/Path_Harmony.png',
+  'REMEMBRANCE':  'https://static.wikia.nocookie.net/houkai-star-rail/images/7/7e/Path_Remembrance.png',
+};
+
+const PATH_ICONS = {
+  'THE HUNT':'🏹', 'HUNT':'🏹', 'NIHILITY':'☠️', 'DESTRUCTION':'⚔️',
+  'ABUNDANCE':'💚', 'PRESERVATION':'🛡️', 'ERUDITION':'📖', 'HARMONY':'🎵',
+};
+
+/* ═══════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════ */
+let selTheme   = THEMES[0];
+let selElement = ELEMENTS[4]; // quantum default
+let selLayout  = 'classic';
+let charImg    = null;
+
+/* ═══════════════════════════════════════════════
+   INIT UI
+═══════════════════════════════════════════════ */
+// Swatches
+const swEl = document.getElementById('sw-row');
+THEMES.forEach((t,i) => {
+  const b = document.createElement('button');
+  b.className = 'sw' + (i===0?' on':'');
+  b.id = 'sw'+i;
+  b.style.background = `linear-gradient(135deg,${t.p},${t.s})`;
+  b.style.setProperty('--sc', t.p);
+  b.title = t.n;
+  b.onclick = () => {
+    document.querySelectorAll('.sw').forEach(s=>s.classList.remove('on'));
+    b.classList.add('on'); selTheme = t; render();
+  };
+  swEl.appendChild(b);
+});
+
+// Elements
+const elEl = document.getElementById('el-row');
+ELEMENTS.forEach(e => {
+  const b = document.createElement('button');
+  b.className = 'el-btn' + (e.k==='quantum'?' on':'');
+  b.id = 'el-'+e.k;
+  b.style.background   = e.k==='quantum' ? e.ec : 'rgba(255,255,255,0.04)';
+  b.style.borderColor  = e.k==='quantum' ? e.c  : 'rgba(255,255,255,0.07)';
+  b.style.color        = e.k==='quantum' ? e.c  : '#475569';
+  b.style.setProperty('--ec', e.ec);
+  b.innerHTML = `<img src="${e.img}" style="width:16px;height:16px;object-fit:contain" onerror="this.outerHTML='${e.ico}'"><span>${e.l}</span>`;
+  b.onclick = () => {
+    document.querySelectorAll('.el-btn').forEach(x => {
+      x.classList.remove('on');
+      const ex = ELEMENTS.find(ee=>x.id==='el-'+ee.k);
+      if(ex){ x.style.background='rgba(255,255,255,0.04)'; x.style.borderColor='rgba(255,255,255,0.07)'; x.style.color='#475569'; }
+    });
+    b.classList.add('on');
+    b.style.background  = e.ec;
+    b.style.borderColor = e.c;
+    b.style.color       = e.c;
+    selElement = e; render();
+  };
+  elEl.appendChild(b);
+});
+
+// Layout picks
+const lpEl = document.getElementById('lp-row');
+[{l:'classic',e:'⬛ Classic'},{l:'cinematic',e:'🎬 Cinematic'},{l:'compact',e:'▤ Compact'}].forEach(({l,e}) => {
+  const b = document.createElement('button');
+  b.className = 'lp' + (l==='classic'?' on':'');
+  b.id = 'lp-'+l; b.textContent = e;
+  b.onclick = () => { selLayout=l; syncLP(); render(); };
+  lpEl.appendChild(b);
+});
+function syncLP(){
+  ['classic','cinematic','compact'].forEach(l => {
+    const b = document.getElementById('lp-'+l);
+    b.classList.toggle('on', l===selLayout);
+    b.style.background   = l===selLayout ? `linear-gradient(135deg,${selTheme.p}99,${selTheme.s})` : 'rgba(255,255,255,0.03)';
+    b.style.color        = l===selLayout ? '#fff' : '#475569';
+    b.style.borderColor  = l===selLayout ? 'transparent' : 'rgba(255,255,255,0.07)';
+    b.style.boxShadow    = l===selLayout ? `0 0 16px ${selTheme.p}44` : 'none';
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════ */
+function uploadImg(inp){
+  const f = inp.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onloadend = () => {
+    charImg = r.result;
+    // update label text to show filename
+    const txt = document.getElementById('upload-txt');
+    if(txt) txt.textContent = '✅ ' + f.name.slice(0, 22) + (f.name.length > 22 ? '…' : '');
+    render();
+  };
+  r.readAsDataURL(f);
+}
+
+function handleName(v){
+  const n = v.toUpperCase();
+  document.getElementById('f-name').value = n;
+  if(DB[n]){
+    const d = DB[n];
+    document.getElementById('f-role').value   = d.role;
+    document.getElementById('f-hp').value     = d.hp;
+    document.getElementById('f-effRes').value = d.effRes;
+    document.getElementById('f-def').value    = d.def;
+    document.getElementById('f-spd').value    = d.spd;
+    document.getElementById('f-brk').value    = d.brk;
+    document.getElementById('f-erg').value    = d.erg;
+    document.getElementById('f-desc').value   = d.desc;
+    document.getElementById('f-skills').value = d.skills;
+    document.getElementById('f-stars').value  = d.stars;
+    // Update search inputs for relic/LC
+    document.getElementById('relic1-input').value = d.relic1;
+    document.getElementById('relic2-input').value = d.relic2;
+    document.getElementById('lc-input').value     = d.lc;
+    // Show clear buttons
+    ['relic1','relic2','lc'].forEach(id => {
+      document.getElementById(`${id}-clear`).classList.add('show');
+    });
+    // Auto-fetch images for the preset items
+    ['relic1','relic2'].forEach(id => {
+      const name = id === 'relic1' ? d.relic1 : d.relic2;
+      fetchWikiImage(name, 'relic').then(url => {
+        if(url) {
+          selImgs[id] = url;
+          const imgEl = document.getElementById(`${id}-img`);
+          const ph    = document.getElementById(`${id}-ph`);
+          imgEl.src = url; imgEl.style.display = 'block'; ph.style.display = 'none';
+          render();
+        }
+      });
+    });
+    fetchWikiImage(d.lc, 'lc').then(url => {
+      if(url) {
+        selImgs.lc = url;
+        const imgEl = document.getElementById('lc-img');
+        const ph    = document.getElementById('lc-ph');
+        imgEl.src = url; imgEl.style.display = 'block'; ph.style.display = 'none';
+        render();
+      }
+    });
+    // set element
+    const el = ELEMENTS.find(e=>e.k===d.element)||ELEMENTS[4];
+    document.querySelectorAll('.el-btn').forEach(x => {
+      const ex = ELEMENTS.find(ee=>x.id==='el-'+ee.k);
+      if(!ex) return;
+      x.classList.remove('on');
+      x.style.background='rgba(255,255,255,0.04)'; x.style.borderColor='rgba(255,255,255,0.07)'; x.style.color='#475569';
+    });
+    const elBtn = document.getElementById('el-'+el.k);
+    if(elBtn){ elBtn.classList.add('on'); elBtn.style.background=el.ec; elBtn.style.borderColor=el.c; elBtn.style.color=el.c; }
+    selElement = el;
+    // set theme swatch
+    document.querySelectorAll('.sw').forEach(s=>s.classList.remove('on'));
+    document.getElementById('sw'+d.theme)?.classList.add('on');
+    selTheme = THEMES[d.theme];
+  }
+  render();
+}
+
+function getData(){
+  const name = document.getElementById('f-name').value.toUpperCase();
+  const dbRec = DB[name]?.rec || null;
+  return {
+    name:    document.getElementById('f-name').value,
+    role:    document.getElementById('f-role').value,
+    ver:     document.getElementById('f-ver').value,
+    hp:      document.getElementById('f-hp').value,
+    effRes:  document.getElementById('f-effRes').value,
+    def:     document.getElementById('f-def').value,
+    spd:     document.getElementById('f-spd').value,
+    brk:     document.getElementById('f-brk').value,
+    erg:     document.getElementById('f-erg').value,
+    desc:    document.getElementById('f-desc').value,
+    skills:  document.getElementById('f-skills').value.split(',').map(s=>s.trim()).filter(Boolean),
+    stars:   +document.getElementById('f-stars').value,
+    relic1:  document.getElementById('relic1-input').value,
+    relic2:  document.getElementById('relic2-input').value,
+    lc:      document.getElementById('lc-input').value,
+    lcStars: +document.getElementById('f-lc-stars').value,
+    font:    document.getElementById('f-font').value,
+    bg:      document.getElementById('f-bg').value,
+    imgRelic1: selImgs.relic1,
+    imgRelic2: selImgs.relic2,
+    imgLc:     selImgs.lc,
+    rec:       dbRec,
+  };
+}
+
+function fontStack(f){
+  return f==='orbitron'  ? "'Orbitron','Segoe UI',sans-serif"
+       : f==='rajdhani'  ? "'Rajdhani','Segoe UI',sans-serif"
+       : "ui-sans-serif,system-ui,sans-serif";
+}
+
+function starsHTML(n, col='#fbbf24'){
+  return Array.from({length:5},(_,i)=>
+    `<span style="color:${i<n?col:'rgba(255,255,255,0.15)'};font-size:13px">★</span>`
+  ).join('');
+}
+
+function avatarHTML(size='md'){
+  const s = size==='sq'?'width:72px;height:72px;border-radius:14px':'width:76px;height:76px;border-radius:50%';
+  const inner = charImg
+    ? `<img src="${charImg}" style="width:100%;height:100%;object-fit:cover"/>`
+    : `<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+  return `<div style="${s};border:4px solid rgba(0,0,0,0.5);overflow:hidden;background:#0d0f1a;box-shadow:0 16px 40px rgba(0,0,0,0.7),0 0 0 1px rgba(255,255,255,0.06);flex-shrink:0;display:flex;align-items:center;justify-content:center">${inner}</div>`;
+}
+
+function bgPattern(type, col){
+  if(type==='grid') return `<svg style="position:absolute;inset:0;opacity:0.04;pointer-events:none" width="100%" height="100%"><defs><pattern id="bg" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="${col}" stroke-width="0.8"/></pattern></defs><rect width="100%" height="100%" fill="url(#bg)"/></svg>`;
+  if(type==='hex')  return `<svg style="position:absolute;inset:0;opacity:0.035;pointer-events:none" width="100%" height="100%"><defs><pattern id="bg" width="56" height="48" patternUnits="userSpaceOnUse"><polygon points="28,0 56,14 56,34 28,48 0,34 0,14" fill="none" stroke="${col}" stroke-width="0.8"/></pattern></defs><rect width="100%" height="100%" fill="url(#bg)"/></svg>`;
+  if(type==='noise')return `<div style="position:absolute;inset:0;opacity:0.06;pointer-events:none;background-image:url('data:image/svg+xml,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'200\\' height=\\'200\\'><filter id=\\'n\\'><feTurbulence type=\\'fractalNoise\\' baseFrequency=\\'0.9\\' numOctaves=\\'4\\'/></filter><rect width=\\'200\\' height=\\'200\\' filter=\\'url(%23n)\\'  opacity=\\'0.4\\'/></svg>');background-size:200px"></div>`;
+  return '';
+}
+
+function statBox(label, val, col){
+  return `<div style="background:rgba(0,0,0,0.4);border-radius:10px;padding:7px 8px;border:1px solid rgba(255,255,255,0.05);position:relative;overflow:hidden;min-width:0">
+    <div style="position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(to right,transparent,${col}88,transparent)"></div>
+    <div style="font-size:5.5px;font-weight:800;opacity:0.3;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:3px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${label}</div>
+    <div style="font-size:14px;font-weight:900;color:${col};letter-spacing:-0.02em;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${val}</div>
+  </div>`;
+}
+
+function statsGrid(d){
+  if(d.rec && d.rec.length){
+    return `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;width:100%;min-width:0">
+      ${d.rec.map(r => `
+        <div style="background:rgba(0,0,0,0.4);border-radius:10px;padding:7px 8px;border:1px solid ${r.col}22;position:relative;overflow:hidden;min-width:0">
+          <div style="position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(to right,transparent,${r.col}88,transparent)"></div>
+          <div style="font-size:5.5px;font-weight:800;opacity:0.35;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:3px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.label}</div>
+          <div style="font-size:14px;font-weight:900;color:${r.col};letter-spacing:-0.02em;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.val}</div>
+        </div>`).join('')}
+    </div>`;
+  }
+  const col = selTheme ? selTheme.p : '#7B61FF';
+  return `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;width:100%;min-width:0">
+    ${statBox('MAX HP',     d.hp+'%',     col)}
+    ${statBox('EFFECT RES', d.effRes+'%', col)}
+    ${statBox('DEFENSE',    d.def+'%',    col)}
+    ${statBox('SPD',        d.spd,        col)}
+    ${statBox('BREAK EFF',  d.brk+'%',   col)}
+    ${statBox('ENERGY',     d.erg+'%',   col)}
+  </div>`;
+}
+
+function skillFlow(skills, col){
+  return skills.slice(0,4).map((s,i,a)=>`
+    <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+      <div style="width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,0.05);border:1px solid ${col}55;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff">${s.charAt(0)}</div>
+      <div style="font-size:6px;font-weight:800;opacity:0.45;text-transform:uppercase;letter-spacing:0.04em">${s}</div>
+    </div>
+    ${i<a.length-1?`<span style="opacity:0.2;font-size:10px;color:#fff;align-self:flex-end;margin-bottom:10px">›</span>`:''}
+  `).join('');
+}
+
+function relicTag(name, col, imgUrl){
+  const thumb = imgUrl
+    ? `<img src="${imgUrl}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,0.1)" onerror="this.style.display='none'">`
+    : `<div style="width:36px;height:36px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px dashed rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px">${col==='#fbbf24'?'🔦':name.startsWith('Space')||name.startsWith('Fleet')||name.startsWith('Pan')||name.startsWith('Belo')||name.startsWith('Cele')||name.startsWith('Inert')||name.startsWith('Talia')||name.startsWith('Spr')||name.startsWith('Rutil')||name.startsWith('Broke')||name.startsWith('Firma')||name.startsWith('Pen')||name.startsWith('Sigo')||name.startsWith('Izumo')||name.startsWith('Dura')||name.startsWith('Forge')?'🌐':'💎'}</div>`;
+  return `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(0,0,0,0.4);border:1px solid ${col}30;border-radius:10px;overflow:hidden;max-width:100%">
+    ${thumb}
+    <span style="font-size:10px;font-weight:700;color:${col};letter-spacing:0.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</span>
+  </div>`;
+}
+
+function pathBadge(role, col){
+  const key    = role.toUpperCase();
+  const pKey   = PATH_IMGS[key] ? key : (Object.keys(PATH_IMGS).find(k => key.includes(k)) || '');
+  const imgUrl = PATH_IMGS[pKey] || null;
+  const iconHtml = imgUrl
+    ? `<img src="${imgUrl}" style="width:14px;height:14px;object-fit:contain;flex-shrink:0" onerror="this.style.display='none'">`
+    : `<span>${PATH_ICONS[key]||PATH_ICONS[key.split(' ').pop()]||'✦'}</span>`;
+  return `<div style="display:inline-flex;align-items:center;gap:5px;padding:4px 12px;background:rgba(0,0,0,0.5);border:1px solid ${col}66;border-radius:99px;font-size:9px;font-weight:900;letter-spacing:0.2em;text-transform:uppercase;color:${col}">
+    ${iconHtml}<span>${role}</span>
+  </div>`;
+}
+
+
+function renderClassic(d, th, el){
+  const col = el.c;
+  const ff  = fontStack(d.font);
+  return `
+    ${bgPattern(d.bg, col)}
+    <div style="position:absolute;top:-20px;right:-20px;width:200px;height:200px;border-radius:50%;background:${col};filter:blur(60px);opacity:0.18;pointer-events:none"></div>
+    <div style="position:absolute;bottom:-50px;left:45%;width:220px;height:220px;border-radius:50%;background:${th.p};filter:blur(110px);opacity:0.1;pointer-events:none"></div>
+    <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(to right,transparent,${col},${col}88,transparent);opacity:0.85"></div>
+    <div style="position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(to right,transparent,${col}44,transparent)"></div>
+    <div style="position:absolute;top:0;bottom:0;left:50%;width:1px;background:linear-gradient(to bottom,transparent,${col}18,transparent)"></div>
+
+    <div style="position:absolute;inset:0;padding:16px 18px;display:grid;grid-template-columns:1fr 1fr;gap:14px;font-family:${ff};box-sizing:border-box;overflow:hidden">
+
+      <!-- LEFT COLUMN -->
+      <div style="display:flex;flex-direction:column;gap:8px;overflow:hidden">
+
+        <!-- Identity row -->
+        <div style="display:flex;gap:10px;align-items:center;flex-shrink:0;overflow:hidden">
+          ${avatarHTML('md')}
+          <div style="min-width:0;flex:1;overflow:hidden">
+            <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;overflow:hidden">
+              <span style="font-size:10px;flex-shrink:0">${starsHTML(d.stars, col)}</span>
+              <span style="font-size:7px;font-weight:800;color:${el.c};background:${el.ec};border:1px solid ${el.c}44;padding:1px 6px;border-radius:99px;flex-shrink:0;white-space:nowrap">${el.ico} ${el.l.toUpperCase()}</span>
+            </div>
+            <div style="font-size:26px;font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:-0.03em;line-height:1;color:#fff;text-shadow:0 0 28px ${col}66;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.name||'CHARACTER'}</div>
+            <div style="display:flex;align-items:center;gap:5px;overflow:hidden">
+              <div style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;background:rgba(0,0,0,0.5);border:1px solid ${col}55;border-radius:99px;font-size:7px;font-weight:900;letter-spacing:0.2em;text-transform:uppercase;color:${col};white-space:nowrap;overflow:hidden;max-width:100%;text-overflow:ellipsis">
+                ${PATH_ICONS[d.role.toUpperCase()]||PATH_ICONS[d.role.split(' ').pop().toUpperCase()]||'✦'} ${d.role}
+              </div>
+              <span style="font-size:7px;color:rgba(255,255,255,0.18);font-weight:700;flex-shrink:0">v${d.ver}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats 3+3 -->
+        <div style="flex-shrink:0;min-width:0;overflow:hidden">
+          <div style="font-size:6px;font-weight:900;opacity:0.18;letter-spacing:0.35em;text-transform:uppercase;margin-bottom:5px">// BATTLE STATS</div>
+          ${statsGrid(d)}
+        </div>
+
+        <!-- Skills -->
+        <div style="background:rgba(0,0,0,0.32);border-radius:11px;padding:8px;border:1px solid rgba(255,255,255,0.05);flex-shrink:0">
+          <div style="font-size:6px;font-weight:900;opacity:0.18;letter-spacing:0.3em;text-transform:uppercase;margin-bottom:7px;text-align:center">SKILL PRIORITY</div>
+          <div style="display:flex;align-items:center;justify-content:space-around">${skillFlow(d.skills, col)}</div>
+        </div>
+
+        <!-- Watermark -->
+        <div style="display:flex;justify-content:space-between;opacity:0.12;margin-top:auto;flex-shrink:0">
+          <span style="font-size:6px;font-weight:900;letter-spacing:0.2em;text-transform:uppercase;color:#fff">HONKAI STAR RAIL</span>
+          <span style="font-size:6px;font-weight:900;letter-spacing:0.1em;color:#fff">DATA ANALYTICS</span>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN -->
+      <div style="display:flex;flex-direction:column;gap:7px;overflow:hidden">
+
+        <div style="font-size:6px;font-weight:900;opacity:0.18;letter-spacing:0.35em;text-transform:uppercase;margin-bottom:1px;flex-shrink:0">// EQUIPMENT</div>
+
+        <!-- Relic 1 -->
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(0,0,0,0.42);border:1px solid ${col}22;border-radius:9px;flex-shrink:0;overflow:hidden">
+          ${d.imgRelic1
+            ? `<img src="${d.imgRelic1}" style="width:30px;height:30px;border-radius:6px;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,0.08)" onerror="this.style.display='none'">`
+            : `<div style="width:30px;height:30px;border-radius:6px;background:rgba(255,255,255,0.05);border:1px dashed rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">💎</div>`}
+          <div style="min-width:0;flex:1;overflow:hidden">
+            <div style="font-size:6px;font-weight:800;opacity:0.22;text-transform:uppercase;letter-spacing:.1em;margin-bottom:1px">RELIC SET</div>
+            <div style="font-size:10px;font-weight:700;color:${col};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.relic1||'—'}</div>
+          </div>
+        </div>
+
+        <!-- Relic 2 -->
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(0,0,0,0.42);border:1px solid ${col}22;border-radius:9px;flex-shrink:0;overflow:hidden">
+          ${d.imgRelic2
+            ? `<img src="${d.imgRelic2}" style="width:30px;height:30px;border-radius:6px;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,0.08)" onerror="this.style.display='none'">`
+            : `<div style="width:30px;height:30px;border-radius:6px;background:rgba(255,255,255,0.05);border:1px dashed rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">🌐</div>`}
+          <div style="min-width:0;flex:1;overflow:hidden">
+            <div style="font-size:6px;font-weight:800;opacity:0.22;text-transform:uppercase;letter-spacing:.1em;margin-bottom:1px">PLANAR ORNAMENT</div>
+            <div style="font-size:10px;font-weight:700;color:${col};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.relic2||'—'}</div>
+          </div>
+        </div>
+
+        <!-- Light Cone -->
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(0,0,0,0.42);border:1px solid #fbbf2422;border-radius:9px;flex-shrink:0;overflow:hidden">
+          ${d.imgLc
+            ? `<img src="${d.imgLc}" style="width:30px;height:30px;border-radius:6px;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,0.08)" onerror="this.style.display='none'">`
+            : `<div style="width:30px;height:30px;border-radius:6px;background:rgba(255,255,255,0.05);border:1px dashed rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">🔦</div>`}
+          <div style="min-width:0;flex:1;overflow:hidden">
+            <div style="font-size:6px;font-weight:800;opacity:0.22;text-transform:uppercase;letter-spacing:.1em;margin-bottom:1px">LIGHT CONE · ${'★'.repeat(d.lcStars)}</div>
+            <div style="font-size:10px;font-weight:700;color:#fbbf24;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.lc||'—'}</div>
+          </div>
+        </div>
+
+        <!-- Desc -->
+        <div style="background:linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.01));border-radius:11px;padding:9px;border:1px solid rgba(255,255,255,0.05);flex:1;min-height:0;display:flex;gap:7px;align-items:flex-start;overflow:hidden">
+          <div style="width:22px;height:22px;background:rgba(0,0,0,0.4);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;border:1px solid ${col}28">ℹ️</div>
+          <div style="font-size:8px;color:rgba(255,255,255,0.3);line-height:1.6;font-style:italic;overflow:hidden;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical">"${d.desc}"</div>
+        </div>
+
+      </div>
+    </div>`;
+}
+
+function pathBadgeSmall(role, col){
+  const icon = PATH_ICONS[role.toUpperCase()] || PATH_ICONS[role.split(' ').pop().toUpperCase()] || '✦';
+  return `<div style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;background:rgba(0,0,0,0.55);border:1px solid ${col}55;border-radius:99px;font-size:7px;font-weight:900;letter-spacing:0.2em;text-transform:uppercase;color:${col}">
+    <span>${icon}</span><span>${role}</span>
+  </div>`;
+}
+
+function pathBadgeSmall(role, col){
+  const key    = role.toUpperCase();
+  const pKey   = PATH_IMGS[key] ? key : (Object.keys(PATH_IMGS).find(k => key.includes(k)) || '');
+  const imgUrl = PATH_IMGS[pKey] || null;
+  const iconHtml = imgUrl
+    ? `<img src="${imgUrl}" style="width:12px;height:12px;object-fit:contain;flex-shrink:0" onerror="this.style.display='none'">`
+    : `<span>${PATH_ICONS[key]||PATH_ICONS[key.split(' ').pop()]||'✦'}</span>`;
+  return `<div style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;background:rgba(0,0,0,0.55);border:1px solid ${col}55;border-radius:99px;font-size:7px;font-weight:900;letter-spacing:0.2em;text-transform:uppercase;color:${col}">
+    ${iconHtml}<span>${role}</span>
+  </div>`;
+}
+function renderCinematic(d, th, el){
+  const col = el.c;
+  const ff  = fontStack(d.font);
+
+  // Left panel: full character image or placeholder
+  const hasImg = !!charImg;
+  const leftPanel = hasImg
+    ? `<div style="position:absolute;top:0;left:0;width:36%;height:100%;overflow:hidden">
+         <img src="${charImg}" style="width:100%;height:100%;object-fit:cover;object-position:center top;display:block"/>
+         <!-- gradient overlay so right side blends nicely -->
+         <div style="position:absolute;inset:0;background:linear-gradient(to right,transparent 55%,${th.g.replace('linear-gradient(135deg,','').split(')')[0].split(',').pop().trim()} 100%)"></div>
+         <!-- bottom gradient -->
+         <div style="position:absolute;bottom:0;left:0;right:0;height:40%;background:linear-gradient(to top,rgba(0,0,0,0.7),transparent)"></div>
+         <!-- Name overlay on bottom of image -->
+         <div style="position:absolute;bottom:14px;left:14px;right:10px">
+           <div style="display:flex;align-items:center;gap:4px;font-size:6px;font-weight:800;color:${col};opacity:0.9;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:3px"><img src="${el.img}" style="width:14px;height:14px;object-fit:contain" onerror="this.outerHTML='${el.ico}'">${el.l.toUpperCase()}</div>
+           <div style="font-size:30px;font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:-0.03em;line-height:1;color:#fff;text-shadow:0 0 30px ${col}88,0 2px 12px rgba(0,0,0,0.9)">${d.name||'CHARACTER'}</div>
+           <div style="margin-top:5px">${pathBadgeSmall(d.role, col)}</div>
+         </div>
+         <!-- Stars top left -->
+         <div style="position:absolute;top:12px;left:12px;font-size:11px">${starsHTML(d.stars, col)}</div>
+       </div>`
+    : `<div style="position:absolute;top:0;left:0;width:36%;height:100%;overflow:hidden;background:linear-gradient(135deg,rgba(0,0,0,0.6),rgba(0,0,0,0.3));display:flex;flex-direction:column;justify-content:space-between;padding:14px">
+         <div>
+           <div style="font-size:11px;margin-bottom:6px">${starsHTML(d.stars, col)}</div>
+           <div style="font-size:9px;font-weight:800;color:${el.c};background:${el.ec};border:1px solid ${el.c}44;padding:2px 9px;border-radius:99px;display:inline-flex;align-items:center;gap:4px;margin-bottom:8px"><img src="${el.img}" style="width:13px;height:13px;object-fit:contain" onerror="this.style.display='none'">${el.l.toUpperCase()}</div>
+           <div style="font-size:28px;font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:-0.03em;line-height:1;color:#fff;text-shadow:0 0 30px ${col}66;margin-bottom:7px">${d.name||'CHARACTER'}</div>
+           ${pathBadge(d.role, col)}
+         </div>
+         <!-- placeholder art -->
+         <div style="flex:1;display:flex;align-items:center;justify-content:center;margin:10px 0">
+           <div style="width:90px;height:90px;border-radius:50%;border:3px solid ${col}44;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.3)">
+             <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+           </div>
+         </div>
+         <div>
+           <div style="font-size:7px;font-weight:800;color:${col};opacity:0.5;letter-spacing:0.2em;margin-bottom:2px">VERSION</div>
+           <div style="font-size:11px;font-weight:900;color:#fff;opacity:0.4">${d.ver}</div>
+         </div>
+       </div>`;
+
+  return `
+    ${bgPattern(d.bg, col)}
+    <div style="position:absolute;top:-20px;right:-20px;width:200px;height:200px;border-radius:50%;background:${col};filter:blur(60px);opacity:0.2;pointer-events:none"></div>
+    <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(to right,transparent,${col},${col}88,transparent);opacity:0.85;pointer-events:none"></div>
+    <div style="position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(to right,transparent,${col}44,transparent);pointer-events:none"></div>
+
+    <!-- Full character image panel -->
+    ${leftPanel}
+
+    <!-- Right panel: data -->
+    <div style="position:absolute;top:0;right:0;width:64%;height:100%;padding:12px 14px 12px 10px;display:flex;flex-direction:column;gap:7px;font-family:${ff};box-sizing:border-box;overflow:hidden;min-width:0">
+
+      <!-- Top: name (only shown when no image) -->
+      ${!hasImg ? '' : `<div style="display:flex;align-items:center;justify-content:space-between;flex-shrink:0;overflow:hidden">
+        <div style="font-size:8px;font-weight:800;color:${col};opacity:0.5;letter-spacing:0.2em">VERSION ${d.ver}</div>
+        <div style="font-size:8px;font-weight:900;color:#fff;opacity:0.18;letter-spacing:0.15em">HONKAI STAR RAIL</div>
+      </div>`}
+
+      <!-- Stats -->
+      <div style="flex-shrink:0">
+        <div style="font-size:6px;font-weight:900;opacity:0.18;letter-spacing:0.35em;text-transform:uppercase;margin-bottom:5px">// BATTLE STATS</div>
+${statsGrid(d)}
+      </div>
+
+      <!-- Equipment -->
+      <div style="flex-shrink:0">
+        <div style="font-size:6px;font-weight:900;opacity:0.18;letter-spacing:0.35em;text-transform:uppercase;margin-bottom:5px">// EQUIPMENT</div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <div style="display:flex;align-items:center;gap:7px;padding:5px 8px;background:rgba(0,0,0,0.45);border:1px solid ${col}22;border-radius:8px;overflow:hidden">
+            ${d.imgRelic1 ? `<img src="${d.imgRelic1}" style="width:26px;height:26px;border-radius:5px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">` : `<div style="width:26px;height:26px;border-radius:5px;background:rgba(255,255,255,0.05);border:1px dashed rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0">💎</div>`}
+            <div style="min-width:0;flex:1;overflow:hidden"><div style="font-size:5.5px;font-weight:800;opacity:0.22;text-transform:uppercase;letter-spacing:.1em;margin-bottom:1px">RELIC SET</div><div style="font-size:9.5px;font-weight:700;color:${col};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.relic1||'—'}</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:7px;padding:5px 8px;background:rgba(0,0,0,0.45);border:1px solid ${col}22;border-radius:8px;overflow:hidden">
+            ${d.imgRelic2 ? `<img src="${d.imgRelic2}" style="width:26px;height:26px;border-radius:5px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">` : `<div style="width:26px;height:26px;border-radius:5px;background:rgba(255,255,255,0.05);border:1px dashed rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0">🌐</div>`}
+            <div style="min-width:0;flex:1;overflow:hidden"><div style="font-size:5.5px;font-weight:800;opacity:0.22;text-transform:uppercase;letter-spacing:.1em;margin-bottom:1px">PLANAR ORNAMENT</div><div style="font-size:9.5px;font-weight:700;color:${col};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.relic2||'—'}</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:7px;padding:5px 8px;background:rgba(0,0,0,0.45);border:1px solid #fbbf2422;border-radius:8px;overflow:hidden">
+            ${d.imgLc ? `<img src="${d.imgLc}" style="width:26px;height:26px;border-radius:5px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">` : `<div style="width:26px;height:26px;border-radius:5px;background:rgba(255,255,255,0.05);border:1px dashed rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0">🔦</div>`}
+            <div style="min-width:0;flex:1;overflow:hidden"><div style="font-size:5.5px;font-weight:800;opacity:0.22;text-transform:uppercase;letter-spacing:.1em;margin-bottom:1px">LIGHT CONE · ${'★'.repeat(d.lcStars)}</div><div style="font-size:9.5px;font-weight:700;color:#fbbf24;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.lc||'—'}</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Skill + Desc -->
+      <div style="flex:1;min-height:0;display:grid;grid-template-columns:auto 1fr;gap:8px;overflow:hidden">
+        <div style="background:rgba(0,0,0,0.32);border-radius:10px;padding:8px;border:1px solid rgba(255,255,255,0.05);display:flex;flex-direction:column;justify-content:center">
+          <div style="font-size:5.5px;font-weight:900;opacity:0.18;letter-spacing:0.3em;text-transform:uppercase;margin-bottom:7px;text-align:center;white-space:nowrap">SKILL PRIORITY</div>
+          <div style="display:flex;align-items:center;justify-content:space-around;gap:2px">${skillFlow(d.skills, col)}</div>
+        </div>
+        <div style="background:linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.01));border-radius:10px;padding:9px;border:1px solid rgba(255,255,255,0.05);display:flex;gap:7px;align-items:flex-start;overflow:hidden">
+          <div style="width:20px;height:20px;background:rgba(0,0,0,0.4);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;border:1px solid ${col}28">ℹ️</div>
+          <div style="font-size:7.5px;color:rgba(255,255,255,0.3);line-height:1.6;font-style:italic;overflow:hidden;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical">"${d.desc}"</div>
+        </div>
+      </div>
+
+    </div>`;
+}
+
+function renderCompact(d, th, el){
+  const col = el.c;
+  const ff  = fontStack(d.font);
+  const headerH = '38%'; // header takes top 38% of card
+
+  return `
+    ${bgPattern(d.bg, col)}
+    <div style="position:absolute;top:-20px;right:-20px;width:200px;height:200px;border-radius:50%;background:${col};filter:blur(60px);opacity:0.16;pointer-events:none"></div>
+    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(to right,transparent,${col},transparent);opacity:0.7;pointer-events:none"></div>
+
+    <!-- ── HEADER with character photo background ── -->
+    <div style="position:absolute;top:0;left:0;right:0;height:${headerH};overflow:hidden">
+      ${charImg
+        ? `<!-- photo bg -->
+           <img src="${charImg}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top"/>
+           <!-- right-side fade so text stays readable -->
+           <div style="position:absolute;inset:0;background:linear-gradient(to right, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.55) 50%, rgba(0,0,0,0.85) 100%)"></div>
+           <!-- bottom fade into card body -->
+           <div style="position:absolute;bottom:0;left:0;right:0;height:60%;background:linear-gradient(to bottom,transparent,${th.g.includes('#') ? th.g.match(/#[0-9a-f]{6}/gi)?.[0]||'#0a0b14' : '#0a0b14'} 100%)"></div>`
+        : `<!-- no photo: solid gradient header -->
+           <div style="position:absolute;inset:0;background:linear-gradient(135deg,${col}22,${col}08)"></div>`}
+      <!-- header accent line top -->
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(to right,transparent,${col},${col}88,transparent);opacity:0.9"></div>
+    </div>
+
+    <!-- ── CONTENT LAYER (always on top) ── -->
+    <div style="position:absolute;inset:0;display:flex;flex-direction:column;font-family:${ff}">
+
+      <!-- TOP: identity row sits on top of photo -->
+      <div style="height:${headerH};padding:12px 18px 10px;display:flex;align-items:center;gap:12px;position:relative;z-index:3">
+        <!-- small avatar circle if no photo, hidden if photo present -->
+        ${!charImg ? `<div style="width:60px;height:60px;border-radius:12px;border:2px solid ${col}55;overflow:hidden;background:rgba(0,0,0,0.4);flex-shrink:0;display:flex;align-items:center;justify-content:center">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>` : ''}
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+            <span style="font-size:10px">${starsHTML(d.stars, col)}</span>
+            <span style="display:inline-flex;align-items:center;gap:3px;font-size:8px;font-weight:800;color:${el.c};background:${el.ec};border:1px solid ${el.c}55;padding:1px 7px;border-radius:99px;flex-shrink:0">
+              <img src="${el.img}" style="width:11px;height:11px;object-fit:contain" onerror="this.style.display='none'">
+              ${el.l.toUpperCase()}
+            </span>
+          </div>
+          <div style="font-size:28px;font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:-0.03em;line-height:1;color:#fff;text-shadow:0 2px 20px ${col}88,0 0 40px rgba(0,0,0,0.9);margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.name||'CHARACTER'}</div>
+          <div style="display:flex;align-items:center;gap:6px">
+            ${pathBadge(d.role, col)}
+            <span style="font-size:7px;color:rgba(255,255,255,0.25);font-weight:700">v${d.ver}</span>
+          </div>
+        </div>
+        <div style="text-align:right;opacity:0.15;flex-shrink:0">
+          <div style="font-size:6px;font-weight:900;color:#fff;letter-spacing:0.25em;text-transform:uppercase">HONKAI</div>
+          <div style="font-size:6px;font-weight:900;color:#fff;letter-spacing:0.25em;text-transform:uppercase">STAR RAIL</div>
+        </div>
+      </div>
+
+      <!-- DIVIDER -->
+      <div style="height:1px;background:linear-gradient(to right,transparent,${col}44,transparent);flex-shrink:0"></div>
+
+      <!-- BODY: stats + skills + equipment -->
+      <div style="flex:1;min-height:0;padding:10px 18px 12px;display:flex;flex-direction:column;gap:8px;overflow:hidden">
+
+        <!-- Stats -->
+        <div style="flex-shrink:0;min-width:0;overflow:hidden">
+          ${statsGrid(d)}
+        </div>
+
+        <!-- Skills + Relic + LC -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1.5fr;gap:8px;flex:1;min-height:0;overflow:hidden">
+          <div style="background:rgba(0,0,0,0.35);border-radius:12px;padding:10px 8px;border:1px solid rgba(255,255,255,0.05);display:flex;flex-direction:column;justify-content:center;overflow:hidden">
+            <div style="font-size:6px;font-weight:900;opacity:0.2;letter-spacing:0.3em;text-transform:uppercase;margin-bottom:8px;text-align:center">SKILL PRIORITY</div>
+            <div style="display:flex;align-items:center;justify-content:space-around">${skillFlow(d.skills, col)}</div>
+          </div>
+          <div style="background:rgba(0,0,0,0.35);border-radius:12px;padding:10px;border:1px solid rgba(255,255,255,0.05);display:flex;flex-direction:column;gap:5px;justify-content:center;overflow:hidden">
+            <div style="font-size:6px;font-weight:900;opacity:0.2;letter-spacing:0.3em;text-transform:uppercase;margin-bottom:3px">RELIC</div>
+            ${relicTag(d.relic1, col, d.imgRelic1)}
+            ${relicTag(d.relic2, col, d.imgRelic2)}
+          </div>
+          <div style="background:rgba(0,0,0,0.35);border-radius:12px;padding:10px;border:1px solid rgba(255,255,255,0.05);display:flex;flex-direction:column;gap:5px;justify-content:center;overflow:hidden">
+            <div style="font-size:6px;font-weight:900;opacity:0.2;letter-spacing:0.3em;text-transform:uppercase;margin-bottom:3px">LIGHT CONE</div>
+            ${relicTag(d.lc+' '+'★'.repeat(d.lcStars), '#fbbf24', d.imgLc)}
+            <div style="font-size:8px;color:rgba(255,255,255,0.28);font-style:italic;line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">"${d.desc.slice(0,55)}..."</div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════
+   MAIN RENDER
+═══════════════════════════════════════════════ */
+function render(){
+  const d  = getData();
+  const th = selTheme;
+  const el = selElement;
+  const c  = document.getElementById('h-canvas');
+  c.style.background = th.g;
+  if(selLayout==='cinematic') c.innerHTML = renderCinematic(d, th, el);
+  else if(selLayout==='compact') c.innerHTML = renderCompact(d, th, el);
+  else c.innerHTML = renderClassic(d, th, el);
+  syncLP();
+}
+
+/* ═══════════════════════════════════════════════
+   EXPORT DROPDOWN
+═══════════════════════════════════════════════ */
+function toggleDropdown(){
+  const menu     = document.getElementById('exp-menu');
+  const chevron  = document.getElementById('exp-chevron');
+  const isOpen   = menu.classList.contains('open');
+  menu.classList.toggle('open', !isOpen);
+  chevron.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', e => {
+  const wrap = document.getElementById('exp-wrap');
+  if(wrap && !wrap.contains(e.target)){
+    document.getElementById('exp-menu').classList.remove('open');
+    document.getElementById('exp-chevron').style.transform = 'rotate(0deg)';
+  }
+});
+
+function showToast(icon, msg){
+  const t  = document.getElementById('toast');
+  document.getElementById('toast-icon').textContent = icon;
+  document.getElementById('toast-msg').textContent  = msg;
+  t.style.opacity   = '1';
+  t.style.transform = 'translateX(-50%) translateY(0)';
+  setTimeout(()=>{
+    t.style.opacity   = '0';
+    t.style.transform = 'translateX(-50%) translateY(80px)';
+  }, 3000);
+}
+
+async function exportAs(format){
+  document.getElementById('exp-menu').classList.remove('open');
+  document.getElementById('exp-chevron').style.transform = 'rotate(0deg)';
+
+  if(format === 'pdf'){ window.print(); return; }
+
+  if(typeof html2canvas === 'undefined'){
+    showToast('⏳', 'Loading library...');
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+  }
+
+  const btn = document.getElementById('exp-btn');
+  btn.classList.add('loading');
+  btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin .7s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Processing...`;
+
+  try {
+    const src  = document.getElementById('h-canvas');
+    const name = (document.getElementById('f-name').value || 'HSR_Card').toUpperCase();
+
+    // Always capture at fixed 760x427, ignoring CSS scale transform
+    const W = CARD_W;
+    const H = CARD_H;
+
+    const origTransform = src.style.transform;
+    const origWillChange = src.style.willChange;
+    src.style.transform  = 'none';
+    src.style.willChange = 'transform'; // forces new stacking context = clips blur properly
+
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    await new Promise(r => setTimeout(r, 120));
+
+    const cvs = await html2canvas(src, {
+      scale:           2,
+      useCORS:         true,
+      allowTaint:      true,
+      backgroundColor: '#060810',
+      logging:         false,
+      width:           W,
+      height:          H,
+      x:               0,
+      y:               0,
+    });
+
+    src.style.transform  = origTransform;
+    src.style.willChange = origWillChange;
+
+    const mimeType = format === 'jpg' ? 'image/jpeg' : 'image/png';
+    const quality  = format === 'jpg' ? 0.95 : 1;
+    const url      = cvs.toDataURL(mimeType, quality);
+    const link     = document.createElement('a');
+    link.download  = `${name}_card.${format}`;
+    link.href      = url;
+    link.click();
+    showToast('🖼️', `Saved: ${name}_card.${format}`);
+
+  } catch(err){
+    showToast('❌', 'Export failed: ' + err.message);
+    console.error(err);
+  } finally {
+    btn.classList.remove('loading');
+    btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg> Export <svg id="exp-chevron" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>`;
+  }
+}
+
+function loadScript(src){
+  return new Promise((res, rej)=>{
+    const s   = document.createElement('script');
+    s.src     = src;
+    s.onload  = res;
+    s.onerror = rej;
+    document.head.appendChild(s);
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   SCALE CARD TO FIT PREVIEW CONTAINER
+═══════════════════════════════════════════════ */
+const CARD_W = 760;
+const CARD_H = 427;
+
+function scaleCard() {
+  const wrap  = document.getElementById('canvas-wrap');
+  const card  = document.getElementById('h-canvas');
+  if (!wrap || !card) return;
+  const availW = wrap.clientWidth;
+  const scale  = availW / CARD_W;
+  card.style.transform = `scale(${scale})`;
+  // shrink wrapper height to match scaled card
+  wrap.style.height = Math.round(CARD_H * scale) + 'px';
+}
+
+window.addEventListener('resize', scaleCard);
+window.addEventListener('load',   scaleCard);
+
+/* INIT */
+render();
+scaleCard();
+</script>
+</body>
+</html>
