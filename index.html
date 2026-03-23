@@ -4,6 +4,26 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>HSR Card Generator</title>
+
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="HSR Card Generator - Buat card karakter Honkai Star Rail kamu sendiri secara gratis! Pilih karakter, tema, dan ekspor sebagai gambar.">
+  <meta name="keywords" content="HSR, Honkai Star Rail, card generator, HSR card, karakter HSR, honkai card maker, star rail card, hsr card maker gratis">
+  <meta name="author" content="treaten">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#7B61FF">
+  <link rel="canonical" href="https://treaten.github.io/hsr-guide-card-z">
+
+  <!-- Open Graph (Preview saat dishare di sosmed & Discord) -->
+  <meta property="og:title" content="HSR Card Generator">
+  <meta property="og:description" content="Buat card karakter Honkai Star Rail kamu sendiri secara gratis! Pilih karakter, tema, dan ekspor sebagai gambar.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://treaten.github.io/hsr-guide-card-z">
+  <meta property="og:site_name" content="HSR Card Generator">
+
+  <!-- Twitter Card (Preview saat dishare di Twitter/X) -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="HSR Card Generator">
+  <meta name="twitter:description" content="Buat card karakter Honkai Star Rail kamu sendiri secara gratis!">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Orbitron:wght@700;900&display=swap');
 
@@ -204,23 +224,23 @@
         <label>Character Name</label>
         <div class="wr">
           <span class="wi"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#7B61FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg></span>
-          <input class="big" id="f-name" value="LYNX" oninput="handleName(this.value)" placeholder="Character name..."/>
+          <input class="big" id="f-name" value="" oninput="handleName(this.value)" placeholder="Character name..."/>
         </div>
       </div>
 
       <div class="g2">
-        <div class="hf"><label>Role / Path</label><input id="f-role" value="ABUNDANCE" oninput="render()"/></div>
-        <div class="hf"><label>Version</label><input id="f-ver" value="2.1" oninput="render()"/></div>
+        <div class="hf"><label>Role / Path</label><input id="f-role" value="" oninput="render()"/></div>
+        <div class="hf"><label>Version</label><input id="f-ver" value="" oninput="render()"/></div>
       </div>
 
       <div class="hf">
         <label>Description</label>
-        <textarea id="f-desc" rows="3" oninput="render()">Lynx adalah penyembuh yang sangat efisien dengan kemampuan menghilangkan debuff dari seluruh rekan tim.</textarea>
+        <textarea id="f-desc" rows="3" oninput="render()"></textarea>
       </div>
 
       <div class="hf">
         <label>Skill Priority (comma separated)</label>
-        <input id="f-skills" value="Skill,Ult,Talent,Basic" oninput="render()"/>
+        <input id="f-skills" value="" oninput="render()"/>
       </div>
 
       <div class="hf">
@@ -257,12 +277,12 @@
       <div class="el-row" id="el-row"></div>
 
       <div class="g2">
-        <div class="hf"><label>Max HP (%)</label><input id="f-hp" value="28" oninput="render()"/></div>
-        <div class="hf"><label>Effect Res (%)</label><input id="f-effRes" value="12" oninput="render()"/></div>
-        <div class="hf"><label>Defense (%)</label><input id="f-def" value="20" oninput="render()"/></div>
-        <div class="hf"><label>SPD</label><input id="f-spd" value="134" oninput="render()"/></div>
-        <div class="hf"><label>Break Effect (%)</label><input id="f-brk" value="66" oninput="render()"/></div>
-        <div class="hf"><label>Energy Regen (%)</label><input id="f-erg" value="100" oninput="render()"/></div>
+        <div class="hf"><label>Max HP (%)</label><input id="f-hp" value="" oninput="render()"/></div>
+        <div class="hf"><label>Effect Res (%)</label><input id="f-effRes" value="" oninput="render()"/></div>
+        <div class="hf"><label>Defense (%)</label><input id="f-def" value="" oninput="render()"/></div>
+        <div class="hf"><label>SPD</label><input id="f-spd" value="" oninput="render()"/></div>
+        <div class="hf"><label>Break Effect (%)</label><input id="f-brk" value="" oninput="render()"/></div>
+        <div class="hf"><label>Energy Regen (%)</label><input id="f-erg" value="" oninput="render()"/></div>
       </div>
     </div>
 
@@ -284,7 +304,7 @@
           <input class="ss-input" id="relic1-input" placeholder="Search relic set name..." autocomplete="off"
             oninput="ssSearch('relic1',this.value)"
             onfocus="ssOpen('relic1')"
-            value="Longevous Disciple"/>
+            value=""/>
           <div class="ss-spin" id="relic1-spin"></div>
           <span class="ss-clear show" id="relic1-clear" onclick="ssClear('relic1')">×</span>
         </div>
@@ -302,7 +322,7 @@
           <input class="ss-input" id="relic2-input" placeholder="Search planar ornament name..." autocomplete="off"
             oninput="ssSearch('relic2',this.value)"
             onfocus="ssOpen('relic2')"
-            value="Fleet of the Ageless"/>
+            value=""/>
           <div class="ss-spin" id="relic2-spin"></div>
           <span class="ss-clear show" id="relic2-clear" onclick="ssClear('relic2')">×</span>
         </div>
@@ -320,7 +340,7 @@
           <input class="ss-input" id="lc-input" placeholder="Search light cone name..." autocomplete="off"
             oninput="ssSearch('lc',this.value)"
             onfocus="ssOpen('lc')"
-            value="Warmth Shortens Cold Nights"/>
+            value=""/>
           <div class="ss-spin" id="lc-spin"></div>
           <span class="ss-clear show" id="lc-clear" onclick="ssClear('lc')">×</span>
         </div>
